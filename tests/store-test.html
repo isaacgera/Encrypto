@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Encrypto — Store Tests</title>
+<style>
+  body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#0f1420;color:#e6e9ef;line-height:1.5;max-width:760px;margin:0 auto;padding:1.5rem}
+  h1{color:#5b8def;font-size:1.3rem}
+  .sub{color:#9aa4b8;font-size:.85rem;margin-bottom:1rem}
+  #summary{font-weight:700;padding:.6rem 1rem;border-radius:8px;margin:1rem 0;border:1px solid #2a3448}
+  #summary.pass{background:rgba(52,199,89,.15);color:#7ee495;border-color:rgba(52,199,89,.4)}
+  #summary.fail{background:rgba(255,69,58,.15);color:#ff9f98;border-color:rgba(255,69,58,.4)}
+  ul{list-style:none;padding:0}
+  li{padding:.4rem .7rem;border-radius:6px;margin-bottom:.3rem;background:#1a2130;border:1px solid #2a3448;font-size:.9rem}
+  li.ok::before{content:"\2713  ";color:#7ee495;font-weight:700}
+  li.bad::before{content:"\2717  ";color:#ff9f98;font-weight:700}
+  li .detail{display:block;color:#9aa4b8;font-size:.78rem;margin-top:.2rem}
+  code{background:rgba(255,255,255,.08);padding:1px 5px;border-radius:4px}
+  .note{color:#e0a94a;font-size:.8rem;margin-top:1rem}
+</style>
+</head>
+<body>
+  <h1>Encrypto — Store Tests</h1>
+  <div class="sub">
+    Verifies <code>js/store.js</code> on top of <code>js/crypto.js</code>. Serve over
+    <code>localhost</code>/<code>https</code>. These tests use the REAL localStorage key and
+    clean up after themselves.
+  </div>
+  <div id="summary">Running…</div>
+  <ul id="results"></ul>
+  <p class="note">Note: if you have a real vault on this origin, run these on a throwaway
+    origin/port — the suite wipes <code>encrypto_vault_v1</code> before and after each test.</p>
+
+<script src="../js/crypto.js"></script>
+<script src="../js/store.js"></script>
+<script>
+(function () {
+  'use strict';
+  var results = document.getElementById('results');
+  var summary = document.getElementById('summary');
+  var passed = 0, failed = 0;
+  var S = window.EncryptoStore;
+
+  function record(name, ok, detail) {
+    var li = document.createElement('li');
+    li.className = ok ? 'ok' : 'bad';
+    li.textContent = name;
+    if (detail) { var d = document.createElement('span'); d.className = 'detail'; d.textContent = detail; li.appendChild(d); }
+    results.appendChild(li);
+    if (ok) passed++; else failed++;
+  }
+  function assert(cond, msg) { if (!cond) throw new Error(msg || 'assertion failed'); }
+  // Accepts a promise OR a thunk. A thunk lets us catch SYNCHRONOUS throws
+  // (e.g. the store's requireUnlocked() guard) as well as rejected promises.
+  async function assertThrows(p, msg) {
+    try { await (typeof p === 'function' ? p() : p); }
+    catch (e) { return e; }
+    throw new Error(msg || 'expected error');
+  }
+  function clean() { try { localStorage.removeItem('encrypto_vault_v1'); } catch (e) {} S.lock(); }
+
+  async function test(name, fn) {
+    clean();
+    try { await fn(); record(name, true); }
+    catch (e) { record(name, false, String(e && e.message || e)); }
+    finally { clean(); }
+  }
+
+  var PASS = 'a-strong-passphrase-123';
+  var WRONG = 'a-strong-passphrase-124';
+
+  async function run() {
+    if (!S) { summary.className = 'fail'; summary.textContent = 'FAIL — EncryptoStore not loaded'; return; }
+
+    await test('No vault initially; exists() is false', async function () {
+      assert(S.exists() === false, 'should not exist after clean');
+      assert(S.isUnlocked() === false, 'should be locked');
+    });
+
+    await test('setup() creates a vault, leaves it unlocked, persists only non-secret data', async function () {
+      await S.setup(PASS);
+      assert(S.exists() === true, 'vault should exist');
+      assert(S.isUnlocked() === true, 'should be unlocked after setup');
+      var raw = JSON.parse(localStorage.getItem('encrypto_vault_v1'));
+      assert(raw.kdf && raw.kdf.salt && raw.kdf.iterations === window.EncryptoCrypto.ITERATIONS, 'kdf params missing');
+      assert(raw.cipher && raw.cipher.iv && raw.cipher.ciphertext, 'cipher payload missing');
+      // ensure no plaintext leaked: the serialized blob must not contain our marker once we add one
+      var serialized = JSON.stringify(raw);
+      assert(serialized.indexOf(PASS) === -1, 'passphrase must never be stored');
+    });
+
+    await test('setup() twice is rejected', async function () {
+      await S.setup(PASS);
+      await assertThrows(S.setup(PASS), 'second setup should reject');
+    });
+
+    await test('lock() then unlock() with correct passphrase restores entries', async function () {
+      await S.setup(PASS);
+      await S.setEntries([{ id: '1', type: 'Note', title: 'hello', fields: { body: 'world' } }]);
+      S.lock();
+      assert(S.isUnlocked() === false, 'should be locked');
+      var count = await S.unlock(PASS);
+      assert(count === 1, 'should have 1 entry, got ' + count);
+      var entries = S.getEntries();
+      assert(entries[0].title === 'hello', 'entry not restored');
+    });
+
+    await test('unlock() with WRONG passphrase fails and stays locked', async function () {
+      await S.setup(PASS);
+      S.lock();
+      await assertThrows(S.unlock(WRONG), 'wrong passphrase should fail');
+      assert(S.isUnlocked() === false, 'must remain locked after a failed unlock');
+    });
+
+    await test('tampered stored ciphertext fails to unlock', async function () {
+      await S.setup(PASS);
+      S.lock();
+      var raw = JSON.parse(localStorage.getItem('encrypto_vault_v1'));
+      var b = window.EncryptoCrypto.base64ToBytes(raw.cipher.ciphertext);
+      b[0] = b[0] ^ 0xff;
+      raw.cipher.ciphertext = window.EncryptoCrypto.bytesToBase64(b);
+      localStorage.setItem('encrypto_vault_v1', JSON.stringify(raw));
+      await assertThrows(S.unlock(PASS), 'tampered vault should fail to unlock');
+    });
+
+    await test('persist() uses a fresh IV each save', async function () {
+      await S.setup(PASS);
+      var iv1 = JSON.parse(localStorage.getItem('encrypto_vault_v1')).cipher.iv;
+      await S.setEntries([{ id: '1', type: 'Note', title: 't', fields: {} }]);
+      var iv2 = JSON.parse(localStorage.getItem('encrypto_vault_v1')).cipher.iv;
+      assert(iv1 !== iv2, 'IV should change on re-save');
+    });
+
+    await test('getEntries()/setEntries() rejected while locked', async function () {
+      await S.setup(PASS);
+      S.lock();
+      var threw = false;
+      try { S.getEntries(); } catch (e) { threw = true; }
+      assert(threw, 'getEntries should throw while locked');
+      // setEntries' unlocked-guard throws synchronously; pass a thunk so the
+      // helper catches it whether it throws or rejects.
+      await assertThrows(function () { return S.setEntries([]); }, 'setEntries should reject while locked');
+    });
+
+    await test('export → import round-trip (overwrite), unlock with original passphrase', async function () {
+      await S.setup(PASS);
+      await S.setEntries([{ id: 'x', type: 'Password', title: 'gmail', fields: { username: 'me', password: 'pw' } }]);
+      var backup = S.exportBackup();
+      assert(backup.type === 'encrypto-backup', 'wrong envelope type');
+      // wipe and import
+      S.wipe();
+      assert(S.exists() === false, 'should be wiped');
+      await S.importBackup(backup);
+      assert(S.exists() === true, 'should exist after import');
+      var count = await S.unlock(PASS);
+      assert(count === 1, 'imported vault should unlock to 1 entry');
+      assert(S.getEntries()[0].title === 'gmail', 'imported entry wrong');
+    });
+
+    await test('importBackup() rejects a non-Encrypto file', async function () {
+      await assertThrows(S.importBackup({ type: 'something-else' }), 'should reject foreign file');
+    });
+
+    await test('importBackup() refuses to clobber existing vault without overwrite', async function () {
+      await S.setup(PASS);
+      var backup = S.exportBackup();
+      await assertThrows(S.importBackup(backup), 'should refuse without overwrite flag');
+      // with overwrite it proceeds
+      await S.importBackup(backup, { overwrite: true });
+      assert(S.exists() === true, 'overwrite import should succeed');
+    });
+
+    await test('wipe() removes the vault entirely', async function () {
+      await S.setup(PASS);
+      S.wipe();
+      assert(S.exists() === false, 'vault should be gone');
+      assert(localStorage.getItem('encrypto_vault_v1') === null, 'storage key should be removed');
+    });
+
+    summary.className = failed === 0 ? 'pass' : 'fail';
+    summary.textContent = (failed === 0 ? 'ALL PASSED' : 'FAILURES') + ' — ' + passed + ' passed, ' + failed + ' failed';
+  }
+
+  run();
+})();
+</script>
+</body>
+</html>

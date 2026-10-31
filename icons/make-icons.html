@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Encrypto — Icon Generator</title>
+<style>
+  body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#0f1420;color:#e6e9ef;line-height:1.5;max-width:720px;margin:0 auto;padding:1.5rem}
+  h1{color:#5b8def;font-size:1.3rem}
+  p{color:#9aa4b8;font-size:.9rem}
+  button{font:inherit;font-weight:600;background:#5b8def;color:#0f1420;border:0;border-radius:8px;padding:.6rem 1rem;cursor:pointer;margin:.3rem .3rem 0 0}
+  canvas{image-rendering:auto;margin:.5rem;border:1px solid #2a3448;border-radius:8px;background:#111}
+  code{background:rgba(255,255,255,.08);padding:1px 5px;border-radius:4px}
+  .row{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem;margin-top:1rem}
+</style>
+</head>
+<body>
+  <h1>Encrypto — Icon Generator</h1>
+  <p>This renders the SVG icons to PNG so the PWA has proper raster icons. Click
+    <strong>Generate &amp; download all</strong>, then save the four files into this
+    <code>icons/</code> folder. One-time step; no build tools needed.</p>
+  <p>Files produced: <code>icon-192.png</code>, <code>icon-512.png</code>,
+     <code>icon-maskable-512.png</code>, and an <code>apple-touch-icon</code> copy as
+     <code>icon-192.png</code> (iOS uses the 192).</p>
+
+  <div class="row">
+    <button id="genBtn">Generate &amp; download all</button>
+  </div>
+  <div class="row" id="preview"></div>
+
+<script>
+(function () {
+  var standard = 'icon.svg';
+  var maskable = 'icon-maskable.svg';
+  var jobs = [
+    { src: standard, size: 192, name: 'icon-192.png' },
+    { src: standard, size: 512, name: 'icon-512.png' },
+    { src: maskable, size: 512, name: 'icon-maskable-512.png' }
+  ];
+
+  function loadSvg(url) {
+    return fetch(url).then(function (r) {
+      if (!r.ok) throw new Error('cannot load ' + url + ' (serve over http/localhost)');
+      return r.text();
+    }).then(function (svgText) {
+      return new Promise(function (resolve, reject) {
+        var blob = new Blob([svgText], { type: 'image/svg+xml' });
+        var u = URL.createObjectURL(blob);
+        var img = new Image();
+        img.onload = function () { resolve({ img: img, url: u }); };
+        img.onerror = function () { reject(new Error('image decode failed for ' + url)); };
+        img.src = u;
+      });
+    });
+  }
+
+  function render(job) {
+    return loadSvg(job.src).then(function (o) {
+      var c = document.createElement('canvas');
+      c.width = job.size; c.height = job.size;
+      var ctx = c.getContext('2d');
+      ctx.clearRect(0, 0, job.size, job.size);
+      ctx.drawImage(o.img, 0, 0, job.size, job.size);
+      URL.revokeObjectURL(o.url);
+      // preview
+      var pc = c.cloneNode();
+      pc.getContext('2d').drawImage(c, 0, 0);
+      pc.style.width = '96px'; pc.style.height = '96px';
+      document.getElementById('preview').appendChild(pc);
+      return new Promise(function (resolve) {
+        c.toBlob(function (blob) { resolve({ blob: blob, name: job.name }); }, 'image/png');
+      });
+    });
+  }
+
+  function download(blob, name) {
+    var u = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = u; a.download = name;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(u); }, 800);
+  }
+
+  document.getElementById('genBtn').addEventListener('click', function () {
+    document.getElementById('preview').innerHTML = '';
+    jobs.reduce(function (p, job) {
+      return p.then(function () {
+        return render(job).then(function (res) { download(res.blob, res.name); });
+      });
+    }, Promise.resolve()).catch(function (e) { alert(e.message); });
+  });
+})();
+</script>
+</body>
+</html>

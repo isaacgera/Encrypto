@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Encrypto">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b5bdb"/>
+      <stop offset="1" stop-color="#7048e8"/>
+    </linearGradient>
+  </defs>
+  <!-- full-bleed background so the maskable safe zone is always covered -->
+  <rect width="512" height="512" fill="url(#g)"/>
+  <!-- lock kept within the ~80% safe zone (centre 410px) -->
+  <g fill="none" stroke="#ffffff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M196 248 v-32 a60 60 0 0 1 120 0 v32"/>
+  </g>
+  <rect x="172" y="248" width="168" height="128" rx="24" fill="#ffffff"/>
+  <circle cx="256" cy="300" r="20" fill="#3b5bdb"/>
+  <rect x="246" y="310" width="20" height="44" rx="10" fill="#3b5bdb"/>
+</svg>

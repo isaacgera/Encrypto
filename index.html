@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Encrypto — a private, locally-encrypted vault for documents, passwords and card details. Nothing leaves your device.">
+<meta name="theme-color" content="#3b5bdb">
+<title>Encrypto — Private Vault</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- Top bar (hidden on the gate until unlocked) -->
+  <header class="topbar" id="topbar" hidden>
+    <div class="brand"><span class="logo" aria-hidden="true">🔐</span> Encrypto</div>
+    <span class="spacer"></span>
+    <span class="lock-timer" id="lockTimer" aria-live="off"></span>
+    <button class="btn btn-ghost btn-icon" id="themeBtn" aria-label="Toggle light/dark theme" title="Toggle theme">◐</button>
+    <button class="btn btn-ghost btn-icon" id="menuBtn" aria-label="Backup & settings" title="Backup & settings" aria-haspopup="menu">⋯</button>
+    <button class="btn btn-danger" id="lockBtn" title="Lock the vault now">Lock</button>
+  </header>
+
+  <!-- ===================== GATE: SETUP (first run) ===================== -->
+  <section class="screen" id="screenSetup" aria-labelledby="setupHeading">
+    <div class="gate">
+      <div class="panel gate-card">
+        <h1 id="setupHeading">Create your vault</h1>
+        <p class="lead">Choose a master passphrase. It encrypts everything you store here, on this device only.</p>
+
+        <div class="warn-box" role="note">
+          <strong>⚠ There is no recovery.</strong> Your passphrase is the only key. If you
+          forget it, your data is <strong>permanently unreadable</strong> — no reset, no backdoor,
+          by design. Write it down somewhere safe.
+        </div>
+
+        <form id="setupForm" novalidate>
+          <div class="field">
+            <label for="setupPass">Master passphrase</label>
+            <div class="input-wrap">
+              <input type="password" id="setupPass" autocomplete="new-password" autocapitalize="off" spellcheck="false" required>
+              <button type="button" class="btn btn-ghost btn-icon reveal-btn" data-reveal="setupPass" aria-label="Show passphrase">👁</button>
+            </div>
+            <div class="meter" aria-hidden="true"><span id="setupMeterBar"></span></div>
+            <div class="meter-label" id="setupMeterLabel">Use a long, memorable phrase — length beats complexity.</div>
+          </div>
+
+          <div class="field">
+            <label for="setupPass2">Confirm passphrase</label>
+            <div class="input-wrap">
+              <input type="password" id="setupPass2" autocomplete="new-password" autocapitalize="off" spellcheck="false" required>
+            </div>
+          </div>
+
+          <label style="display:flex;gap:0.5rem;align-items:flex-start;font-size:var(--fs-sm);margin-bottom:0.8rem;cursor:pointer">
+            <input type="checkbox" id="setupAck" style="width:auto;min-height:0;margin-top:3px">
+            <span>I understand that if I lose this passphrase, my data cannot be recovered.</span>
+          </label>
+
+          <div class="form-error" id="setupError" role="alert"></div>
+          <button type="submit" class="btn btn-primary" id="setupSubmit" style="width:100%">Create vault</button>
+        </form>
+
+        <p class="lead" style="margin-top:1rem;text-align:center">
+          Restoring a backup instead?
+          <button type="button" class="btn btn-ghost" id="setupImportBtn" style="padding:0.2rem 0.5rem">Import a backup</button>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== GATE: UNLOCK ===================== -->
+  <section class="screen" id="screenUnlock" aria-labelledby="unlockHeading">
+    <div class="gate">
+      <div class="panel gate-card">
+        <h1 id="unlockHeading">Unlock vault</h1>
+        <p class="lead">Enter your master passphrase to decrypt your data.</p>
+        <form id="unlockForm" novalidate>
+          <div class="field">
+            <label for="unlockPass">Master passphrase</label>
+            <div class="input-wrap">
+              <input type="password" id="unlockPass" autocomplete="current-password" autocapitalize="off" spellcheck="false" required autofocus>
+              <button type="button" class="btn btn-ghost btn-icon reveal-btn" data-reveal="unlockPass" aria-label="Show passphrase">👁</button>
+            </div>
+          </div>
+          <div class="form-error" id="unlockError" role="alert"></div>
+          <button type="submit" class="btn btn-primary" id="unlockSubmit" style="width:100%">Unlock</button>
+        </form>
+        <p class="lead" style="margin-top:1rem;text-align:center">
+          <button type="button" class="btn btn-ghost" id="unlockImportBtn" style="padding:0.2rem 0.5rem">Import a backup</button>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== VAULT ===================== -->
+  <main class="screen" id="screenVault" aria-labelledby="vaultHeading">
+    <h1 id="vaultHeading" class="sr-only">Your vault</h1>
+
+    <div class="vault-toolbar">
+      <input type="search" class="search" id="searchInput" placeholder="Search entries…" aria-label="Search entries" autocomplete="off">
+      <button class="btn btn-primary" id="addBtn">+ Add</button>
+    </div>
+
+    <div class="filters" id="typeFilters" role="group" aria-label="Filter by type">
+      <button class="chip-btn" data-type="all" aria-pressed="true">All</button>
+      <button class="chip-btn" data-type="Document" aria-pressed="false">Documents</button>
+      <button class="chip-btn" data-type="Password" aria-pressed="false">Passwords</button>
+      <button class="chip-btn" data-type="Card" aria-pressed="false">Cards</button>
+      <button class="chip-btn" data-type="Note" aria-pressed="false">Notes</button>
+    </div>
+
+    <ul class="entry-list" id="entryList" aria-live="polite"></ul>
+  </main>
+
+  <!-- Footer (Powered by Forjé) -->
+  <footer class="app-footer">
+    <span class="app-footer-brand">Powered by Forjé</span>
+    <span class="app-footer-copy">© 2026 Isaac A Gera. All rights reserved.</span>
+  </footer>
+</div>
+
+<!-- ===================== ENTRY MODAL ===================== -->
+<div class="modal-backdrop" id="entryModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="entryModalTitle">
+  <div class="modal" id="entryModal">
+    <div class="modal-head">
+      <h2 id="entryModalTitle">Add entry</h2>
+      <button class="btn btn-ghost btn-icon" id="entryCloseBtn" aria-label="Close">✕</button>
+    </div>
+    <form id="entryForm" novalidate>
+      <input type="hidden" id="entryId">
+      <div class="field">
+        <label for="entryType">Type</label>
+        <select id="entryType">
+          <option value="Document">Document</option>
+          <option value="Password">Password</option>
+          <option value="Card">Card</option>
+          <option value="Note">Note</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="entryTitle">Title</label>
+        <input type="text" id="entryTitle" required autocomplete="off" placeholder="e.g. Passport, Gmail, Visa card">
+      </div>
+      <!-- type-specific fields injected here -->
+      <div id="entryFields"></div>
+      <div class="form-error" id="entryError" role="alert"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-danger" id="entryDeleteBtn" hidden>Delete</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn" id="entryCancelBtn">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="entrySaveBtn">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== MENU MODAL (backup/settings) ===================== -->
+<div class="modal-backdrop" id="menuModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="menuModalTitle">
+  <div class="modal" id="menuModal">
+    <div class="modal-head">
+      <h2 id="menuModalTitle">Backup & settings</h2>
+      <button class="btn btn-ghost btn-icon" id="menuCloseBtn" aria-label="Close">✕</button>
+    </div>
+    <p class="lead">Your vault lives only in this browser on this device. Export an encrypted
+      backup regularly — clearing browser data will erase the vault.</p>
+    <div style="display:flex;flex-direction:column;gap:0.6rem">
+      <button class="btn" id="exportBtn">⬇ Export encrypted backup</button>
+      <button class="btn" id="importBtn">⬆ Import backup (replaces current)</button>
+      <hr style="border:none;border-top:1px solid var(--border);margin:0.4rem 0">
+      <button class="btn btn-danger" id="wipeBtn">🗑 Delete vault from this device</button>
+    </div>
+  </div>
+</div>
+
+<!-- hidden file input for import -->
+<input type="file" id="importFile" accept="application/json,.json,.encrypto" hidden>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/crypto.js"></script>
+<script src="js/store.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Encrypto — Crypto Tests</title>
+<style>
+  body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#0f1420;color:#e6e9ef;line-height:1.5;max-width:760px;margin:0 auto;padding:1.5rem}
+  h1{color:#5b8def;font-size:1.3rem}
+  .sub{color:#9aa4b8;font-size:.85rem;margin-bottom:1rem}
+  #summary{font-weight:700;padding:.6rem 1rem;border-radius:8px;margin:1rem 0;border:1px solid #2a3448}
+  #summary.pass{background:rgba(52,199,89,.15);color:#7ee495;border-color:rgba(52,199,89,.4)}
+  #summary.fail{background:rgba(255,69,58,.15);color:#ff9f98;border-color:rgba(255,69,58,.4)}
+  ul{list-style:none;padding:0}
+  li{padding:.4rem .7rem;border-radius:6px;margin-bottom:.3rem;background:#1a2130;border:1px solid #2a3448;font-size:.9rem}
+  li.ok::before{content:"\2713  ";color:#7ee495;font-weight:700}
+  li.bad::before{content:"\2717  ";color:#ff9f98;font-weight:700}
+  li .detail{display:block;color:#9aa4b8;font-size:.78rem;margin-top:.2rem}
+  code{background:rgba(255,255,255,.08);padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+  <h1>Encrypto — Crypto Tests</h1>
+  <div class="sub">
+    Browser-runnable verification of <code>js/crypto.js</code>. Serve over
+    <code>http://localhost</code> or <code>https</code> (Web Crypto needs a secure context).
+  </div>
+  <div id="summary">Running…</div>
+  <ul id="results"></ul>
+
+<script src="../js/crypto.js"></script>
+<script>
+(function () {
+  'use strict';
+  var results = document.getElementById('results');
+  var summary = document.getElementById('summary');
+  var passed = 0, failed = 0;
+
+  function record(name, ok, detail) {
+    var li = document.createElement('li');
+    li.className = ok ? 'ok' : 'bad';
+    li.textContent = name;
+    if (detail) {
+      var d = document.createElement('span');
+      d.className = 'detail';
+      d.textContent = detail;
+      li.appendChild(d);
+    }
+    results.appendChild(li);
+    if (ok) passed++; else failed++;
+  }
+
+  // Minimal async test runner
+  function test(name, fn) {
+    return Promise.resolve()
+      .then(fn)
+      .then(function () { record(name, true); })
+      .catch(function (e) { record(name, false, String(e && e.message || e)); });
+  }
+
+  // assert helpers
+  function assert(cond, msg) { if (!cond) throw new Error(msg || 'assertion failed'); }
+  async function assertThrows(promise, msg) {
+    try { await promise; }
+    catch (e) { return e; }
+    throw new Error(msg || 'expected an error but none was thrown');
+  }
+
+  var C = window.EncryptoCrypto;
+
+  async function run() {
+    if (!C) { summary.className = 'fail'; summary.textContent = 'FAIL — EncryptoCrypto not loaded'; return; }
+
+    var PASS = 'correct horse battery staple';
+    var WRONG = 'correct horse battery staplE';
+
+    await test('Secure context / Web Crypto available', function () {
+      assert(window.crypto && window.crypto.subtle, 'crypto.subtle missing — serve over https/localhost');
+    });
+
+    await test('deriveKey returns a non-extractable AES-GCM CryptoKey', async function () {
+      var salt = C.newSalt();
+      var key = await C.deriveKey(PASS, salt);
+      assert(key, 'no key');
+      assert(key.type === 'secret', 'not a secret key');
+      assert(key.extractable === false, 'key should be non-extractable');
+      assert(key.algorithm && key.algorithm.name === 'AES-GCM', 'not AES-GCM');
+    });
+
+    await test('encrypt → decrypt round-trip recovers the plaintext', async function () {
+      var salt = C.newSalt();
+      var key = await C.deriveKey(PASS, salt);
+      var msg = JSON.stringify({ hello: 'world', n: 42, u: 'ünîçödé 🔐' });
+      var enc = await C.encrypt(msg, key);
+      assert(enc.iv && enc.ciphertext, 'missing iv/ciphertext');
+      var dec = await C.decrypt(enc, key);
+      assert(dec === msg, 'round-trip mismatch');
+    });
+
+    await test('WRONG passphrase fails to decrypt (no partial access)', async function () {
+      var salt = C.newSalt();
+      var keyGood = await C.deriveKey(PASS, salt);
+      var enc = await C.encrypt('secret payload', keyGood);
+      var keyBad = await C.deriveKey(WRONG, salt); // same salt, wrong passphrase
+      var err = await assertThrows(C.decrypt(enc, keyBad), 'wrong passphrase should fail');
+      assert(err instanceof C.Error, 'should be EncryptoCryptoError');
+    });
+
+    await test('TAMPERED ciphertext is detected (auth tag)', async function () {
+      var salt = C.newSalt();
+      var key = await C.deriveKey(PASS, salt);
+      var enc = await C.encrypt('secret payload', key);
+      // flip a byte in the ciphertext
+      var bytes = C.base64ToBytes(enc.ciphertext);
+      bytes[0] = bytes[0] ^ 0xff;
+      var tampered = { iv: enc.iv, ciphertext: C.bytesToBase64(bytes) };
+      await assertThrows(C.decrypt(tampered, key), 'tampered data should fail');
+    });
+
+    await test('TAMPERED IV is detected', async function () {
+      var salt = C.newSalt();
+      var key = await C.deriveKey(PASS, salt);
+      var enc = await C.encrypt('secret payload', key);
+      var ivBytes = C.base64ToBytes(enc.iv);
+      ivBytes[0] = ivBytes[0] ^ 0xff;
+      var tampered = { iv: C.bytesToBase64(ivBytes), ciphertext: enc.ciphertext };
+      await assertThrows(C.decrypt(tampered, key), 'tampered IV should fail');
+    });
+
+    await test('Fresh IV per encryption (no IV reuse)', async function () {
+      var salt = C.newSalt();
+      var key = await C.deriveKey(PASS, salt);
+      var a = await C.encrypt('same message', key);
+      var b = await C.encrypt('same message', key);
+      assert(a.iv !== b.iv, 'IV was reused across encryptions');
+      assert(a.ciphertext !== b.ciphertext, 'ciphertext identical — IV likely reused');
+    });
+
+    await test('Different salt → different key (same passphrase)', async function () {
+      var salt1 = C.newSalt();
+      var salt2 = C.newSalt();
+      var key1 = await C.deriveKey(PASS, salt1);
+      var enc = await C.encrypt('payload', key1);
+      var key2 = await C.deriveKey(PASS, salt2); // same passphrase, different salt
+      await assertThrows(C.decrypt(enc, key2), 'different salt should not decrypt');
+    });
+
+    await test('base64 salt derive matches raw salt derive', async function () {
+      var salt = C.newSalt();
+      var saltB64 = C.bytesToBase64(salt);
+      var keyRaw = await C.deriveKey(PASS, salt);
+      var enc = await C.encrypt('payload', keyRaw);
+      var keyB64 = await C.deriveKeyFromBase64Salt(PASS, saltB64);
+      var dec = await C.decrypt(enc, keyB64);
+      assert(dec === 'payload', 'base64 salt path did not match');
+    });
+
+    await test('Empty passphrase is rejected', async function () {
+      var salt = C.newSalt();
+      await assertThrows(C.deriveKey('', salt), 'empty passphrase should reject');
+    });
+
+    await test('Malformed payload is rejected cleanly', async function () {
+      var salt = C.newSalt();
+      var key = await C.deriveKey(PASS, salt);
+      await assertThrows(C.decrypt({ iv: 'x' }, key), 'malformed payload should reject');
+    });
+
+    // summary
+    summary.className = failed === 0 ? 'pass' : 'fail';
+    summary.textContent = (failed === 0 ? 'ALL PASSED' : 'FAILURES') +
+      ' — ' + passed + ' passed, ' + failed + ' failed';
+  }
+
+  run();
+})();
+</script>
+</body>
+</html>
