@@ -1,5 +1,22 @@
 # Encrypto — Changelog
 
+## [1.1.5] — 2026-10-31
+
+Layout rework (grid) — footer sits at the bottom reliably.
+
+### Fixed
+- **Footer floating above the bottom** of the screen on the installed iPhone.
+  Reworked the app shell from nested flex to a **3-row CSS grid**
+  (`grid-template-rows: auto 1fr auto` → topbar / scrolling screen / footer),
+  with explicit row placement so it holds whether or not the topbar is shown.
+  The footer is now always the bottom row; the entry list fills and scrolls in
+  the middle. Clearer, more predictable than the previous flex model.
+
+### Changed
+- Service worker `CACHE_NAME` → `encrypto-v1.1.5`.
+
+
+
 ## [1.1.4] — 2026-10-31
 
 iOS status-bar meta (completes the safe-area fix).
