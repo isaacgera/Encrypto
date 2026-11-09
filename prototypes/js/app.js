@@ -139,7 +139,7 @@
         var input = $(btn.getAttribute('data-reveal'));
         var showing = input.type === 'text';
         input.type = showing ? 'password' : 'text';
-        btn.setAttribute('aria-label', showing ? 'Show passphrase' : 'Hide passphrase');
+        btn.setAttribute('aria-label', showing ? 'Show Encrypto Key' : 'Hide Encrypto Key');
         btn.textContent = showing ? '👁' : '🙈';
       });
     });
@@ -153,8 +153,8 @@
       var err = $('setupError'); err.textContent = '';
       var p1 = $('setupPass').value, p2 = $('setupPass2').value;
       if (p1.length < 8) { err.textContent = 'Use at least 8 characters (longer is better).'; return; }
-      if (p1 !== p2) { err.textContent = 'The two passphrases do not match.'; return; }
-      if (!$('setupAck').checked) { err.textContent = 'Please acknowledge that there is no recovery.'; return; }
+      if (p1 !== p2) { err.textContent = 'The two Encrypto Keys do not match.'; return; }
+      if (!$('setupAck').checked) { err.textContent = 'Please acknowledge that a lost Encrypto Key cannot be recovered.'; return; }
       var btn = $('setupSubmit'); btn.disabled = true; btn.textContent = 'Encrypting…';
       S.setup(p1).then(function () {
         $('setupPass').value = ''; $('setupPass2').value = '';
@@ -171,10 +171,10 @@
       e.preventDefault();
       var err = $('unlockError'); err.textContent = '';
       var pass = $('unlockPass').value;
-      if (!pass) { err.textContent = 'Enter your passphrase.'; return; }
+      if (!pass) { err.textContent = 'Enter your Encrypto Key.'; return; }
       var btn = $('unlockSubmit'); btn.disabled = true; btn.textContent = 'Decrypting…';
       S.unlock(pass).then(function () { $('unlockPass').value = ''; openVault('Unlocked.'); })
-        .catch(function () { err.textContent = 'Incorrect passphrase, or the stored data has been altered.'; })
+        .catch(function () { err.textContent = 'Incorrect Encrypto Key, or the stored data has been altered.'; })
         .then(function () { btn.disabled = false; btn.textContent = 'Unlock'; });
     });
     $('unlockImportBtn').addEventListener('click', triggerImport);
@@ -800,7 +800,7 @@
       catch (ex) { toast('That file is not valid JSON.'); return; }
       if (S.exists() && !confirm(
         'Importing will REPLACE the vault (and attachments) currently on this device. ' +
-        'You will need the imported backup\u2019s passphrase to open it. Continue?'
+        'You will need the imported backup\u2019s Encrypto Key to open it. Continue?'
       )) return;
       S.importBackup(envelope, { overwrite: true }).then(function () {
         // import attachments too (array may be absent in a v1.0 backup)
@@ -808,7 +808,7 @@
         return A.importAll(atts, { clear: true });
       }).then(function () {
         closeModal('menuModalBackdrop');
-        toast('Backup imported. Unlock with its passphrase.');
+        toast('Backup imported. Unlock with its Encrypto Key.');
         route();
       }).catch(function (ex) { toast(ex.message || 'Import failed.'); });
     };

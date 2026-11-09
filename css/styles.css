@@ -132,7 +132,7 @@ body {
   padding:
     calc(env(safe-area-inset-top, 0px) + 0.6rem)
     calc(env(safe-area-inset-right, 0px) + 1rem)
-    calc(env(safe-area-inset-bottom, 0px) + 0.2rem)
+    env(safe-area-inset-bottom, 0px)
     calc(env(safe-area-inset-left, 0px) + 1rem);
   overflow: hidden; /* page itself doesn't scroll; the middle row does */
 }
@@ -192,6 +192,8 @@ body {
 .btn-ghost:hover { background: var(--surface-2); box-shadow: none; }
 .btn-icon { padding: 0.5rem; min-width: 42px; justify-content: center; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+/* full-width buttons (e.g. Unlock / Create vault) centre their label */
+.btn[style*="width:100%"], .btn[style*="width: 100%"] { justify-content: center; }
 
 /* ---------- Cards / panels ---------- */
 .panel {
@@ -329,7 +331,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--primary); box-sh
 
 /* ---------- Footer ---------- */
 .app-footer {
-  flex-shrink: 0; padding: 1rem 0 0.7rem; border-top: 1px solid var(--border);
+  flex-shrink: 0; padding: 0.8rem 0 0.2rem; border-top: 1px solid var(--border);
   text-align: center; color: var(--text-light); font-size: 0.72rem; line-height: 1.6;
   display: flex; flex-direction: column; gap: 0.1rem;
 }

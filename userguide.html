@@ -31,12 +31,12 @@
 </head>
 <body>
   <h1>Encrypto</h1>
-  <div class="sub">User Guide &middot; <span class="tag">v1.1.5</span></div>
+  <div class="sub">User Guide &middot; <span class="tag">v1.1.6</span></div>
 
   <div class="card">
     <p>Encrypto is a private, locally-encrypted vault for your important details — documents,
     passwords, card info and secure notes. Everything is encrypted on your own device and
-    unlocked with a single master passphrase. Nothing is ever sent anywhere.</p>
+    unlocked with a single Encrypto Key. Nothing is ever sent anywhere.</p>
     <div class="toc">
       <strong>Contents:</strong>
       <a href="#start">Getting started</a> &middot;
@@ -52,19 +52,19 @@
   </div>
 
   <div class="warn" id="recovery">
-    <strong>⚠ The one rule: there is no recovery.</strong> Your master passphrase is the only
+    <strong>⚠ The one rule: there is no recovery.</strong> Your Encrypto Key is the only
     key to your data. If you forget it, your vault becomes <strong>permanently unreadable</strong> —
     there is no reset, no backup question, and no backdoor. This is deliberate: it's what keeps your
-    data safe. <strong>Write your passphrase down and keep it somewhere safe.</strong>
+    data safe. <strong>Write your Encrypto Key down and keep it somewhere safe.</strong>
   </div>
 
   <div class="card" id="start">
     <h2>Getting started</h2>
     <ol>
-      <li><strong>First run — create your vault.</strong> Choose a master passphrase (a long,
+      <li><strong>First run — create your vault.</strong> Choose an Encrypto Key (a long,
       memorable phrase works best — length matters more than symbols), confirm it, tick the box to
       acknowledge there's no recovery, and select <em>Create vault</em>.</li>
-      <li><strong>Returning — unlock.</strong> Enter your passphrase and select <em>Unlock</em>. If
+      <li><strong>Returning — unlock.</strong> Enter your Encrypto Key and select <em>Unlock</em>. If
       it's wrong (or the stored data has been altered), it simply won't open — there's no partial
       access.</li>
     </ol>
@@ -124,7 +124,7 @@
       <li><strong>Lock now:</strong> the <em>Lock</em> button locks immediately.</li>
     </ul>
     <p>When locked, your data is encrypted and the key is wiped from memory — you'll need your
-    passphrase to get back in.</p>
+    Encrypto Key to get back in.</p>
   </div>
 
   <div class="card" id="backup">
@@ -132,9 +132,9 @@
     <p>Open the <strong>⋯ menu</strong> (top right) for backup options.</p>
     <ul>
       <li><strong>Export encrypted backup</strong> — downloads a <code>.json</code> file that is
-      itself encrypted. It's useless to anyone without your passphrase, so it's safe to store.</li>
+      itself encrypted. It's useless to anyone without your Encrypto Key, so it's safe to store.</li>
       <li><strong>Import backup</strong> — restores from a backup file. This <strong>replaces</strong>
-      the vault currently on the device, and you'll unlock it with <em>that backup's</em> passphrase.</li>
+      the vault currently on the device, and you'll unlock it with <em>that backup's</em> Encrypto Key.</li>
       <li><strong>Delete vault</strong> — permanently removes the vault from this device (asks twice).</li>
     </ul>
     <div class="warn">
@@ -159,12 +159,12 @@
     <ul>
       <li><strong>Zero network.</strong> Encrypto never sends your data anywhere — no accounts, no
       servers, no tracking. It works entirely offline.</li>
-      <li><strong>Strong, standard crypto.</strong> Your passphrase derives an encryption key
+      <li><strong>Strong, standard crypto.</strong> Your Encrypto Key derives an encryption key
       (<code>PBKDF2-SHA256</code>), and entries are sealed with <code>AES-GCM</code> using the
       browser's built-in Web Crypto. The stored data is only ciphertext.</li>
       <li><strong>Not a hardware vault.</strong> Encrypto protects your data at rest. It can't
-      protect against a compromised device (malware) or a weak/guessed passphrase. Choose a strong
-      passphrase and keep your device secure.</li>
+      protect against a compromised device (malware) or a weak/guessed Encrypto Key. Choose a strong
+      Encrypto Key and keep your device secure.</li>
       <li><strong>Secure context needed.</strong> Encrypto must be opened over HTTPS (or
       <code>localhost</code>). It won't run with weakened cryptography.</li>
     </ul>

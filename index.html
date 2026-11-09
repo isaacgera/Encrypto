@@ -35,27 +35,27 @@
     <div class="gate">
       <div class="panel gate-card">
         <h1 id="setupHeading">Create your vault</h1>
-        <p class="lead">Choose a master passphrase. It encrypts everything you store here, on this device only.</p>
+        <p class="lead">Choose an Encrypto Key. It encrypts everything you store here, on this device only.</p>
 
         <div class="warn-box" role="note">
-          <strong>⚠ There is no recovery.</strong> Your passphrase is the only key. If you
+          <strong>⚠ There is no recovery.</strong> Your Encrypto Key is the only key. If you
           forget it, your data is <strong>permanently unreadable</strong> — no reset, no backdoor,
           by design. Write it down somewhere safe.
         </div>
 
         <form id="setupForm" novalidate>
           <div class="field">
-            <label for="setupPass">Master passphrase</label>
+            <label for="setupPass">Encrypto Key</label>
             <div class="input-wrap">
               <input type="password" id="setupPass" autocomplete="new-password" autocapitalize="off" spellcheck="false" required>
-              <button type="button" class="btn btn-ghost btn-icon reveal-btn" data-reveal="setupPass" aria-label="Show passphrase">👁</button>
+              <button type="button" class="btn btn-ghost btn-icon reveal-btn" data-reveal="setupPass" aria-label="Show Encrypto Key">👁</button>
             </div>
             <div class="meter" aria-hidden="true"><span id="setupMeterBar"></span></div>
             <div class="meter-label" id="setupMeterLabel">Use a long, memorable phrase — length beats complexity.</div>
           </div>
 
           <div class="field">
-            <label for="setupPass2">Confirm passphrase</label>
+            <label for="setupPass2">Confirm Encrypto Key</label>
             <div class="input-wrap">
               <input type="password" id="setupPass2" autocomplete="new-password" autocapitalize="off" spellcheck="false" required>
             </div>
@@ -63,7 +63,7 @@
 
           <label style="display:flex;gap:0.5rem;align-items:flex-start;font-size:var(--fs-sm);margin-bottom:0.8rem;cursor:pointer">
             <input type="checkbox" id="setupAck" style="width:auto;min-height:0;margin-top:3px">
-            <span>I understand that if I lose this passphrase, my data cannot be recovered.</span>
+            <span>I understand that if I lose my Encrypto Key, my data cannot be recovered.</span>
           </label>
 
           <div class="form-error" id="setupError" role="alert"></div>
@@ -83,13 +83,13 @@
     <div class="gate">
       <div class="panel gate-card">
         <h1 id="unlockHeading">Unlock vault</h1>
-        <p class="lead">Enter your master passphrase to decrypt your data.</p>
+        <p class="lead">Enter your Encrypto Key to decrypt your data.</p>
         <form id="unlockForm" novalidate>
           <div class="field">
-            <label for="unlockPass">Master passphrase</label>
+            <label for="unlockPass">Encrypto Key</label>
             <div class="input-wrap">
               <input type="password" id="unlockPass" autocomplete="current-password" autocapitalize="off" spellcheck="false" required autofocus>
-              <button type="button" class="btn btn-ghost btn-icon reveal-btn" data-reveal="unlockPass" aria-label="Show passphrase">👁</button>
+              <button type="button" class="btn btn-ghost btn-icon reveal-btn" data-reveal="unlockPass" aria-label="Show Encrypto Key">👁</button>
             </div>
           </div>
           <div class="form-error" id="unlockError" role="alert"></div>

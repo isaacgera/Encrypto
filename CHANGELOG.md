@@ -1,5 +1,19 @@
 # Encrypto — Changelog
 
+## [1.1.6] — 2026-10-31
+
+Terminology + small UI polish.
+
+### Changed
+- **"Master passphrase" renamed to "Encrypto Key"** throughout the app and user
+  guide (setup, unlock, warnings, errors, backup import, and references).
+- **Full-width buttons centre their label** (Unlock / Create vault were
+  left-aligned).
+- Footer nudged closer to the bottom edge.
+- Service worker `CACHE_NAME` → `encrypto-v1.1.6`.
+
+
+
 ## [1.1.5] — 2026-10-31
 
 Layout rework (grid) — footer sits at the bottom reliably.
