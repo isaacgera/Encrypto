@@ -1,5 +1,21 @@
 # Encrypto — Changelog
 
+## [1.1.3] — 2026-10-31
+
+iOS safe-area fix.
+
+### Fixed
+- **Header hidden under the status bar / notch** on installed iOS PWAs. Added
+  `env(safe-area-inset-*)` padding to the app shell (with a small extra top
+  cushion), so the topbar sits clearly below the status bar and the footer
+  clears the home indicator. Pairs with the existing `viewport-fit=cover`.
+  (Insets resolve to real values only on device; desktop is unaffected.)
+
+### Changed
+- Service worker `CACHE_NAME` → `encrypto-v1.1.3`.
+
+
+
 ## [1.1.2] — 2026-10-31
 
 Mobile layout fix (proper).
