@@ -118,19 +118,23 @@ body {
   * { transition: none !important; animation: none !important; }
 }
 
-/* ---------- Layout ---------- */
+/* ---------- Layout ----------
+   The app fills the viewport height exactly (not more), so the topbar stays
+   pinned at the top and the vault list scrolls INSIDE rather than the whole
+   page scrolling (which previously clipped the sticky topbar and left a gap). */
 .app {
   max-width: 820px;
   margin: 0 auto;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   padding: 0 1rem;
+  overflow: hidden; /* page itself doesn't scroll; inner regions do */
 }
 
-/* screens */
-.screen { display: none; flex: 1; flex-direction: column; }
+/* screens — the active screen fills the remaining height and scrolls inside */
+.screen { display: none; flex: 1 1 auto; min-height: 0; flex-direction: column; overflow-y: auto; }
 .screen.active { display: flex; }
 
 /* ---------- Top bar ---------- */
@@ -140,10 +144,9 @@ body {
   gap: 0.6rem;
   padding: 0.9rem 0 0.7rem;
   border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
   background: var(--bg);
   z-index: 10;
+  flex-shrink: 0; /* fixed row at the top of the app column */
 }
 .brand {
   display: flex; align-items: center; gap: 0.5rem;
@@ -193,13 +196,13 @@ body {
 .gate {
   flex: 1;
   display: flex;
-  align-items: center;
   justify-content: center;
   padding: 2rem 0;
 }
 .gate-card {
   width: 100%;
   max-width: 440px;
+  margin: auto 0; /* vertically centre, but allow scroll (no top-clip) on short screens */
 }
 .gate-card h1 { margin: 0 0 0.2rem; font-size: 1.4rem; }
 .gate-card .lead { color: var(--text-light); margin: 0 0 1.2rem; font-size: var(--fs-sm); }
@@ -317,7 +320,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--primary); box-sh
 
 /* ---------- Footer ---------- */
 .app-footer {
-  margin-top: auto; padding: 1rem 0 0.7rem; border-top: 1px solid var(--border);
+  flex-shrink: 0; padding: 1rem 0 0.7rem; border-top: 1px solid var(--border);
   text-align: center; color: var(--text-light); font-size: 0.72rem; line-height: 1.6;
   display: flex; flex-direction: column; gap: 0.1rem;
 }
@@ -348,7 +351,12 @@ input:focus, textarea:focus, select:focus { border-color: var(--primary); box-sh
   border-bottom: 2px solid var(--warn);
   color: var(--warn); font-weight: 700; font-size: 0.74rem; letter-spacing: 0.3px;
   text-align: center; padding: 0.35rem 0.6rem;
+  flex-shrink: 0;
 }
+/* In the prototype the banner sits above .app, so the app fills the REMAINING
+   height. (The live app has no banner, so its .app uses the full 100dvh.) */
+body:has(.proto-banner) .app { height: auto; flex: 1 1 auto; min-height: 0; }
+body:has(.proto-banner) { display: flex; flex-direction: column; }
 
 /* attachments section in the entry modal */
 .attach-section { margin-top: 0.4rem; border-top: 1px solid var(--border); padding-top: 0.9rem; }

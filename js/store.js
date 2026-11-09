@@ -25,7 +25,7 @@
   // --- Constants ------------------------------------------------------------
   var STORAGE_KEY = 'encrypto_vault_v1'; // namespaced; bump suffix if schema changes
   var SCHEMA_VERSION = 2;                // v1.1: attachments era (schema-1 vaults still open)
-  var APP_VERSION = '1.1.1';             // single source of truth for app version
+  var APP_VERSION = '1.1.2';             // single source of truth for app version
   var EXPORT_TYPE = 'encrypto-backup';   // identifies our export envelope
 
   // --- In-memory state (never persisted) ------------------------------------

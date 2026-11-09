@@ -1,5 +1,23 @@
 # Encrypto — Changelog
 
+## [1.1.2] — 2026-10-31
+
+Mobile layout fix (proper).
+
+### Fixed
+- **Mobile vault layout** — on first load the topbar was clipped at the top and
+  a large empty gap sat above the footer (the page was taller than the screen
+  and scrolled). Reworked the layout so the app shell fills the viewport exactly
+  (`height: 100dvh`, `overflow: hidden`), the **topbar and footer are fixed
+  rows**, and the active screen **scrolls internally**. Supersedes the partial
+  v1.1.1 attempt.
+
+### Changed
+- Service worker `CACHE_NAME` → `encrypto-v1.1.2`. (This release is also the
+  first chance to see the v1.1.1 "new version ready" prompt on an installed PWA.)
+
+
+
 ## [1.1.1] — 2026-10-31
 
 Update prompt + mobile viewport fix.
