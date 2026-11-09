@@ -10,7 +10,7 @@
  * assets (a cache-first worker otherwise serves stale files).
  * -----------------------------------------------------------------------------
  */
-var CACHE_NAME = 'encrypto-v1.1.3';
+var CACHE_NAME = 'encrypto-v1.1.4';
 
 // Core shell — must all cache or the install fails (atomic addAll).
 var CORE_ASSETS = [

@@ -128,9 +128,10 @@ body {
   flex-direction: column;
   /* Safe-area insets (iOS notch / status bar / home indicator) + a little extra
      top cushion so the header is clearly below the status bar. Falls back to 0
-     on devices/emulators without insets, so desktop is unaffected. */
+     on devices/emulators without insets, so desktop is unaffected. The box-sizing
+     is border-box, so the padding is included within the 100dvh height. */
   padding:
-    calc(env(safe-area-inset-top, 0px) + 0.5rem)
+    calc(env(safe-area-inset-top, 0px) + 0.6rem)
     calc(env(safe-area-inset-right, 0px) + 1rem)
     env(safe-area-inset-bottom, 0px)
     calc(env(safe-area-inset-left, 0px) + 1rem);

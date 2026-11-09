@@ -1,5 +1,22 @@
 # Encrypto — Changelog
 
+## [1.1.4] — 2026-10-31
+
+iOS status-bar meta (completes the safe-area fix).
+
+### Fixed
+- **Header still cut off under the status bar** on the installed iPhone PWA,
+  because the iOS web-app meta tags were missing — so `env(safe-area-inset-top)`
+  wasn't reporting the real status-bar height and the v1.1.3 padding had little
+  effect. Added `apple-mobile-web-app-capable`, `mobile-web-app-capable`,
+  `apple-mobile-web-app-status-bar-style = black-translucent`, and the app
+  title meta. With these, the safe-area padding now clears the status bar.
+
+### Changed
+- Service worker `CACHE_NAME` → `encrypto-v1.1.4`.
+
+
+
 ## [1.1.3] — 2026-10-31
 
 iOS safe-area fix.
