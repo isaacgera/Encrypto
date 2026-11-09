@@ -24,8 +24,8 @@
 
   // --- Constants ------------------------------------------------------------
   var STORAGE_KEY = 'encrypto_vault_v1'; // namespaced; bump suffix if schema changes
-  var SCHEMA_VERSION = 1;                // on-disk schema version (for migrations)
-  var APP_VERSION = '1.0.0';             // single source of truth for app version
+  var SCHEMA_VERSION = 2;                // v1.1: attachments era (schema-1 vaults still open)
+  var APP_VERSION = '1.1.0';             // single source of truth for app version
   var EXPORT_TYPE = 'encrypto-backup';   // identifies our export envelope
 
   // --- In-memory state (never persisted) ------------------------------------
@@ -151,6 +151,9 @@
         state.key = key;
         state.entries = entries;
         state.meta = { salt: rec.kdf.salt, iterations: rec.kdf.iterations };
+        // Transparently upgrade an older schema-1 vault to the current schema.
+        // Entries are unchanged; this just re-stamps the record. No data loss.
+        if (rec.schema < SCHEMA_VERSION) { persist(); }
         return entries.length;
       });
     });
@@ -169,6 +172,9 @@
   function requireUnlocked() {
     if (!isUnlocked()) throw new StoreError('Vault is locked.');
   }
+
+  // Expose the in-memory key so the attachments layer (v1.1) can use it.
+  function getKey() { requireUnlocked(); return state.key; }
 
   // Returns a shallow copy so callers can't mutate internal state directly.
   function getEntries() {
@@ -207,10 +213,11 @@
     if (!rec) throw new StoreError('No vault to export.');
     return {
       type: EXPORT_TYPE,
-      exportVersion: 1,
+      exportVersion: 2,           // v1.1 envelope (may carry attachments)
       appVersion: APP_VERSION,
       exportedAt: new Date().toISOString(),
-      vault: rec
+      vault: rec,
+      attachments: []            // app.js fills this from EncryptoAttachments
     };
   }
 
@@ -269,6 +276,7 @@
     unlock: unlock,
     lock: lock,
 
+    getKey: getKey,           // v1.1: needed by the attachments layer
     getEntries: getEntries,
     setEntries: setEntries,
     persist: persist,

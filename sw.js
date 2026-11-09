@@ -10,7 +10,7 @@
  * assets (a cache-first worker otherwise serves stale files).
  * -----------------------------------------------------------------------------
  */
-var CACHE_NAME = 'encrypto-v1.0.0';
+var CACHE_NAME = 'encrypto-v1.1.0';
 
 // Core shell — must all cache or the install fails (atomic addAll).
 var CORE_ASSETS = [
@@ -18,6 +18,7 @@ var CORE_ASSETS = [
   './index.html',
   './css/styles.css',
   './js/crypto.js',
+  './js/attachments.js',
   './js/store.js',
   './js/app.js',
   './manifest.webmanifest'

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Encrypto [proto] — Attachments Tests</title>
+<style>
+  body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#0f1420;color:#e6e9ef;line-height:1.5;max-width:760px;margin:0 auto;padding:1.5rem}
+  h1{color:#5b8def;font-size:1.3rem}
+  .proto{display:inline-block;background:#e8590c;color:#fff;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:.5rem;vertical-align:middle}
+  .sub{color:#9aa4b8;font-size:.85rem;margin-bottom:1rem}
+  #summary{font-weight:700;padding:.6rem 1rem;border-radius:8px;margin:1rem 0;border:1px solid #2a3448}
+  #summary.pass{background:rgba(52,199,89,.15);color:#7ee495;border-color:rgba(52,199,89,.4)}
+  #summary.fail{background:rgba(255,69,58,.15);color:#ff9f98;border-color:rgba(255,69,58,.4)}
+  ul{list-style:none;padding:0}
+  li{padding:.4rem .7rem;border-radius:6px;margin-bottom:.3rem;background:#1a2130;border:1px solid #2a3448;font-size:.9rem}
+  li.ok::before{content:"\2713  ";color:#7ee495;font-weight:700}
+  li.bad::before{content:"\2717  ";color:#ff9f98;font-weight:700}
+  li .detail{display:block;color:#9aa4b8;font-size:.78rem;margin-top:.2rem}
+  code{background:rgba(255,255,255,.08);padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+  <h1>Encrypto — Attachments Tests <span class="proto">PROTOTYPE</span></h1>
+  <div class="sub">
+    Verifies the prototype <code>js/attachments.js</code> (IndexedDB <code>encrypto_attachments_proto</code>)
+    + binary crypto. Serve over <code>localhost</code>/<code>https</code>. Clears its own store
+    before/after each test — it never touches the live app's data.
+  </div>
+  <div id="summary">Running…</div>
+  <ul id="results"></ul>
+
+<script src="../js/crypto.js"></script>
+<script src="../js/attachments.js"></script>
+<script>
+(function () {
+  'use strict';
+  var results = document.getElementById('results');
+  var summary = document.getElementById('summary');
+  var passed = 0, failed = 0;
+  var C = window.EncryptoCrypto;
+  var A = window.EncryptoAttachments;
+
+  function record(name, ok, detail) {
+    var li = document.createElement('li');
+    li.className = ok ? 'ok' : 'bad';
+    li.textContent = name;
+    if (detail) { var d = document.createElement('span'); d.className = 'detail'; d.textContent = detail; li.appendChild(d); }
+    results.appendChild(li);
+    if (ok) passed++; else failed++;
+  }
+  function assert(cond, msg) { if (!cond) throw new Error(msg || 'assertion failed'); }
+  async function assertThrows(p, msg) {
+    try { await (typeof p === 'function' ? p() : p); }
+    catch (e) { return e; }
+    throw new Error(msg || 'expected error');
+  }
+  async function clean() { try { await A.clearAll(); } catch (e) {} }
+  async function test(name, fn) {
+    await clean();
+    try { await fn(); record(name, true); }
+    catch (e) { record(name, false, String(e && e.message || e)); }
+    finally { await clean(); }
+  }
+  function bytesOf(str) { return new TextEncoder().encode(str); }
+  function sameBytes(a, b) {
+    if (a.length !== b.length) return false;
+    for (var i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+    return true;
+  }
+  async function keyFor(pass) { return C.deriveKey(pass || 'test-passphrase', C.newSalt()); }
+
+  async function run() {
+    if (!A) { summary.className = 'fail'; summary.textContent = 'FAIL — EncryptoAttachments not loaded'; return; }
+    assert(A._dbName === 'encrypto_attachments_proto', 'prototype must use the isolated DB name');
+
+    await test('prototype uses the isolated IndexedDB name', async function () {
+      assert(A._dbName === 'encrypto_attachments_proto', 'wrong DB name: ' + A._dbName);
+    });
+
+    await test('binary encryptBytes → decryptBytes round-trip', async function () {
+      var key = await keyFor();
+      var raw = bytesOf('⚑ binary payload with ünïcödé'.repeat(50));
+      var dec = await C.decryptBytes(await C.encryptBytes(raw, key), key);
+      assert(sameBytes(dec, raw), 'byte round-trip mismatch');
+    });
+
+    await test('add → getBytes recovers bytes, name and mime', async function () {
+      var key = await keyFor();
+      var raw = bytesOf('PDF-ish content');
+      var meta = await A.add('entry1', { name: 'passport.pdf', mimeType: 'application/pdf', bytes: raw }, key);
+      assert(meta.id && meta.name === 'passport.pdf' && meta.size === raw.length, 'bad metadata');
+      var got = await A.getBytes(meta.id, key);
+      assert(got.name === 'passport.pdf' && got.mimeType === 'application/pdf' && sameBytes(got.bytes, raw), 'recover mismatch');
+    });
+
+    await test('stored record never holds plaintext name/bytes', async function () {
+      var key = await keyFor();
+      await A.add('entry1', { name: 'secret-passport.pdf', mimeType: 'application/pdf', bytes: bytesOf('TOPSECRET') }, key);
+      var blob = JSON.stringify(await A.exportAll());
+      assert(blob.indexOf('secret-passport') === -1, 'filename leaked');
+      assert(blob.indexOf('TOPSECRET') === -1, 'content leaked');
+    });
+
+    await test('listMeta returns all attachments for an entry', async function () {
+      var key = await keyFor();
+      await A.add('entryX', { name: 'a.txt', mimeType: 'text/plain', bytes: bytesOf('a') }, key);
+      await A.add('entryX', { name: 'b.txt', mimeType: 'text/plain', bytes: bytesOf('b') }, key);
+      await A.add('entryY', { name: 'c.txt', mimeType: 'text/plain', bytes: bytesOf('c') }, key);
+      var list = await A.listMeta('entryX', key);
+      assert(list.length === 2, 'expected 2, got ' + list.length);
+    });
+
+    await test('WRONG key cannot decrypt', async function () {
+      var key = await keyFor('right');
+      var meta = await A.add('e', { name: 'x.bin', mimeType: 'application/octet-stream', bytes: bytesOf('data') }, key);
+      await assertThrows(A.getBytes(meta.id, await keyFor('wrong')), 'wrong key should fail');
+    });
+
+    await test('TAMPERED ciphertext is detected', async function () {
+      var key = await keyFor();
+      var meta = await A.add('e', { name: 'x.bin', mimeType: 'application/octet-stream', bytes: bytesOf('data') }, key);
+      var all = await A.exportAll();
+      var b = C.base64ToBytes(all[0].data.ciphertext); b[0] = b[0] ^ 0xff;
+      all[0].data.ciphertext = C.bytesToBase64(b);
+      await A.importAll(all, { clear: true });
+      await assertThrows(A.getBytes(meta.id, key), 'tampered data should fail');
+    });
+
+    await test('remove deletes one attachment', async function () {
+      var key = await keyFor();
+      var meta = await A.add('e', { name: 'x.txt', mimeType: 'text/plain', bytes: bytesOf('x') }, key);
+      await A.remove(meta.id);
+      await assertThrows(A.getBytes(meta.id, key), 'removed should be gone');
+    });
+
+    await test('removeForEntry deletes all of an entry\u2019s attachments', async function () {
+      var key = await keyFor();
+      await A.add('e1', { name: 'a', mimeType: 't', bytes: bytesOf('a') }, key);
+      await A.add('e1', { name: 'b', mimeType: 't', bytes: bytesOf('b') }, key);
+      await A.add('e2', { name: 'c', mimeType: 't', bytes: bytesOf('c') }, key);
+      var n = await A.removeForEntry('e1');
+      assert(n === 2, 'expected 2 removed, got ' + n);
+      assert((await A.listMeta('e2', key)).length === 1, 'e2 should survive');
+    });
+
+    await test('export → import round-trip preserves decryptable attachments', async function () {
+      var key = await keyFor();
+      var raw = bytesOf('round-trip me');
+      var meta = await A.add('e', { name: 'r.bin', mimeType: 'application/octet-stream', bytes: raw }, key);
+      var backup = await A.exportAll();
+      await A.clearAll();
+      await A.importAll(backup, { clear: true });
+      assert(sameBytes((await A.getBytes(meta.id, key)).bytes, raw), 'imported bytes mismatch');
+    });
+
+    await test('locked (no key) operations are rejected', async function () {
+      await assertThrows(A.add('e', { name: 'x', mimeType: 't', bytes: bytesOf('x') }, null), 'add needs a key');
+      await assertThrows(A.getBytes('whatever', null), 'getBytes needs a key');
+      await assertThrows(A.listMeta('e', null), 'listMeta needs a key');
+    });
+
+    summary.className = failed === 0 ? 'pass' : 'fail';
+    summary.textContent = (failed === 0 ? 'ALL PASSED' : 'FAILURES') + ' — ' + passed + ' passed, ' + failed + ' failed';
+  }
+
+  run();
+})();
+</script>
+</body>
+</html>

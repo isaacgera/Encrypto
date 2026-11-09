@@ -1,6 +1,6 @@
 ﻿# Encrypto — Design
 
-- **Category:** Utility | **Tier:** Medium | **Status:** In Progress (build kickoff — crypto model re-confirmed in Plan mode 31 Oct 2026)
+- **Category:** Utility | **Tier:** Medium | **Status:** Built (Encrypto v1.1.0) — attachments shipped 31 Oct 2026
 
 > This captures the agreed crypto model the build works against. Encrypto is the most
 > security-sensitive app in the family, so these are decisions, not sketches. Re-confirmed in

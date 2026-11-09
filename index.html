@@ -147,6 +147,21 @@
       </div>
       <!-- type-specific fields injected here -->
       <div id="entryFields"></div>
+
+      <!-- ===== Attachments (v1.1) ===== -->
+      <div class="attach-section" id="attachSection">
+        <div class="attach-head">
+          <h3>Attachments</h3>
+          <span class="attach-busy" id="attachBusy" hidden>Working…</span>
+        </div>
+        <p class="attach-hint" id="attachHint">Attach scans, photos or PDFs. Each file is encrypted with your vault key.</p>
+        <ul class="attach-list" id="attachList" aria-live="polite"></ul>
+        <div class="attach-add-row">
+          <button type="button" class="btn" id="attachAddBtn">📎 Add file</button>
+          <span class="attach-busy" id="attachLimit">Max 5&nbsp;MB/file</span>
+        </div>
+      </div>
+
       <div class="form-error" id="entryError" role="alert"></div>
       <div class="modal-actions">
         <button type="button" class="btn btn-danger" id="entryDeleteBtn" hidden>Delete</button>
@@ -166,7 +181,7 @@
       <button class="btn btn-ghost btn-icon" id="menuCloseBtn" aria-label="Close">✕</button>
     </div>
     <p class="lead">Your vault lives only in this browser on this device. Export an encrypted
-      backup regularly — clearing browser data will erase the vault.</p>
+      backup regularly — clearing browser data will erase the vault. Backups include attachments.</p>
     <div style="display:flex;flex-direction:column;gap:0.6rem">
       <button class="btn" id="exportBtn">⬇ Export encrypted backup</button>
       <button class="btn" id="importBtn">⬆ Import backup (replaces current)</button>
@@ -176,12 +191,14 @@
   </div>
 </div>
 
-<!-- hidden file input for import -->
+<!-- hidden file inputs -->
 <input type="file" id="importFile" accept="application/json,.json,.encrypto" hidden>
+<input type="file" id="attachFile" hidden>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="js/crypto.js"></script>
+<script src="js/attachments.js"></script>
 <script src="js/store.js"></script>
 <script src="js/app.js"></script>
 </body>

@@ -1,10 +1,10 @@
 ﻿# Encrypto — Tasks
 
-- **Status:** In Progress (build kickoff 31 Oct 2026)
+- **Status:** Built (Encrypto v1.1.0) — attachments shipped 31 Oct 2026 (v1.0.0 signed off earlier same day)
 
-> Build started 31 Oct 2026 after Plan mode re-confirmed the crypto model and resolved the
-> kickoff decisions. Status stays `In Progress` until Isaac verifies on a real device and
-> explicitly signs off (per the backlog-sync rule).
+> Built and shipped 31 Oct 2026. Deployed to GitHub Pages and verified by Isaac on a real
+> mobile phone, then signed off. v1.1 (attachments + folders) requirements captured in
+> SPEC-requirements §8-9 for a future build.
 
 ## Planning (done)
 - [x] Agree v1 scope (master-passphrase vault; Document/Password/Card/Note; search;
@@ -43,14 +43,20 @@
       CHANGELOG.md, LICENSE (MIT); version constant `APP_VERSION='1.0.0'`.
 - [x] Ideas.md status -> In Progress (at build start). **-> Built pending Isaac's sign-off.**
 
-## Pending Isaac's manual verification (then sign-off → Built)
-- [ ] Run `tests/store-test.html` in a browser (expect 13/13 green).
-- [ ] Walk the full app flow over a local server: setup → add each entry type → search/filter →
-      reveal/copy (watch the 30 s clear) → lock/unlock → export → import → wipe.
-- [ ] Run `icons/make-icons.html` once to produce the PNG icons into `icons/`.
-- [ ] Install as a PWA and confirm offline load.
-- [ ] **Real installed iPhone PWA:** confirm clipboard copy/auto-clear, auto-lock on idle, and
-      lock-on-background actually behave (per the iOS-PWA standing rule).
+## Verification (done — 31 Oct 2026)
+- [x] `tests/crypto-test.html` — 11/11 green (confirmed by Isaac).
+- [x] `tests/store-test.html` — 12/12 green (confirmed by Isaac; one conditional block).
+- [x] PNG icons generated via `icons/make-icons.html` and placed in `icons/`.
+- [x] Installed as a desktop PWA; theme toggle fixed + re-verified.
+- [x] Deployed to GitHub Pages (dedicated `encrypto` repo) and **verified on a real mobile
+      phone** by Isaac, then signed off.
+- [~] iOS-specific clipboard/auto-lock/lock-on-background behaviours: covered by the real-device
+      test above. (If an installed *iPhone* PWA is later used specifically, re-confirm per the
+      `ios-pwa-patterns` rule — the pattern/fallbacks are already in place.)
+
+## Deferred to v1.1 (requirements captured — see SPEC-requirements §8-9)
+- Encrypted file attachments per entry (IndexedDB-backed; needs its own Plan/Quick-Spec).
+- Optional folders within each entry type.
 
 ## Deferred to v2+
 - Argon2 KDF (behind a version flag); per-entry encryption; password generator; attachments;

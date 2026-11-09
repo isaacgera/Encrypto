@@ -141,3 +141,99 @@ folders/categories, biometric unlock. Explicitly NOT planned: any sync/cloud (br
 ### Next session
 Once Isaac has tested and signed off: generate PNG icons, flip Ideas.md → `Built (Encrypto
 v1.0.0)`, and deploy (static host; bump `CACHE_NAME` on any future change).
+
+---
+
+## Session 2 (wrap-up) — 31 Oct 2026 — v1.0.0 shipped & signed off
+
+**Finished, deployed and signed off Encrypto v1.0.0. Verified live on a real mobile phone via
+GitHub Pages. Status flipped to Built.**
+
+### Since code-complete
+- **Tests:** `tests/store-test.html` → 12/12 green (one conditional block; `crypto-test.html`
+  already 11/11). Both suites pass in a real engine.
+- **Theme-toggle bug (app) — fixed.** `html[data-theme="light"]` only set `color-scheme` but
+  didn't restate the light token set, so on a dark-OS machine all three toggle states rendered
+  dark (the toggle looked dead). Fixed by giving the light override the full light token set;
+  Isaac re-verified it works.
+- **Test-harness bug (not an app bug) — fixed.** `assertThrows` didn't tolerate a *synchronous*
+  throw, and `setEntries()`'s unlocked-guard throws synchronously. Made `assertThrows` accept a
+  thunk and passed the call as one. The store was always correct (it refuses while locked).
+- **Icons:** PNGs generated via `icons/make-icons.html` and placed in `icons/`.
+- **Delivery files added:** `README.md`, `.gitignore`, `CHANGELOG.md`, `LICENSE` (MIT,
+  © Isaac A Gera).
+
+### Deployment
+- Forjé set up the local git repo (`git init -b main`, add, commit `dbec615` — 25 files).
+- Isaac created the public `encrypto` GitHub repo, pushed, and enabled GitHub Pages himself
+  (Forjé can't create repos / push — needs Isaac's auth; the local terminal is also flaky).
+- Deployed to GitHub Pages and **verified on a real mobile phone**, then **signed off**.
+
+### Status
+- **Ideas.md → `Built (Encrypto v1.0.0)`.** SPEC-tasks status → Built; verification section
+  completed.
+
+### Deferred to v1.1 (requirements captured)
+Isaac asked for two features during sign-off, both deferred:
+1. **Encrypted file attachments** per entry (documents/cards) — a storage-architecture change
+   (IndexedDB), so it needs its own **Plan/Quick-Spec** pass before code.
+2. **Folders within categories** — smaller, data-model + UI only.
+Requirements written up in **SPEC-requirements.md §8-9** (REQ-10..17, NFR-07..13) and noted on
+the Ideas.md row.
+
+### Doc staleness (flagged by the Session-Log Scribe)
+- **SPEC-requirements.md** — minor: status header still says "In Progress (build kickoff)";
+  should read Built. §8-9 reqs are correct.
+- **SPEC-design.md** — minor: same status-header lag; crypto body still accurate.
+- **userguide.html** — current (no v1.0.0 behaviour changed at sign-off); revisit at v1.1.
+
+### Next session
+**v1.1 — start in Plan mode on the encrypted-attachments design (IndexedDB)**, then folders.
+Any future change: bump `APP_VERSION` + SW `CACHE_NAME` so the installed PWA picks it up.
+
+---
+
+## Session 3 — 31 Oct 2026 — v1.1.0 Encrypted Attachments (built, ported, shipped)
+
+**Built encrypted file attachments in a prototype first (prototype-first workflow), tested on
+desktop + mobile emulator, then ported to the live app and deployed. Shipped as v1.1.0.**
+
+### Flow
+- Started v1.1 in Plan mode; agreed scope: attachments on all four entry types, 5 MB/file cap,
+  inline image thumbnails + unified preview, over-5MB image compress (with before/after confirm)
+  / non-image "pick smaller", attachments in the encrypted backup. IndexedDB for binary storage.
+- **Mid-build course-correction:** caught that I'd begun editing the live app directly; reverted
+  the live `crypto.js`, removed the stray live files, and rebuilt properly in
+  `prototypes/` (isolated storage: `encproto_` localStorage + `encrypto_attachments_proto`
+  IndexedDB, PROTOTYPE banner, `1.1.0-proto` tag).
+- Verified the crypto/storage layer via `attachments-test.html` (11 green). Built the full
+  prototype app (index/css/store/app) and tested interactively.
+- **Fixes from Isaac's testing:** (1) attach on first attempt via a pre-generated entry id, with
+  orphan cleanup on cancel/close/esc/lock; (2) unified "open in new tab" preview for all file
+  types (retired the image-only lightbox); (3) a short one-shot grace window so an in-app preview
+  doesn't trip lock-on-background. Re-tested on desktop + mobile emulator — good.
+
+### Decisions captured for later (not built)
+- **Biometric unlock (WebAuthn / Face ID)** → v1.2; needs Plan mode (it changes the "key never
+  persisted" stance — see SPEC-requirements §10, NFR-14 the key tradeoff).
+- **Unlock throttle** → only if Encrypto ever becomes a Play/App Store app; non-destructive only
+  (SPEC-requirements §11). Decision for the web/PWA version: do nothing.
+
+### Ported to live + released
+- Binary `encryptBytes`/`decryptBytes` added to `crypto.js`; new `js/attachments.js`
+  (live DB `encrypto_attachments`); `store.js` schema → 2 (schema-1 vaults auto-migrate on
+  unlock, no data loss) + `getKey()` + attachments in the export envelope; attachments UI in
+  `index.html`/`app.js`/`styles.css`; `tests/attachments-test.html` brought across.
+- **Version bump:** `APP_VERSION` 1.0.0 → **1.1.0**; SW `CACHE_NAME` → **encrypto-v1.1.0**.
+  CHANGELOG + userguide updated.
+- Committed and pushed to the `encrypto` GitHub repo; GitHub Pages redeploys.
+
+### Verification
+- `tests/crypto-test.html` (11) and `tests/attachments-test.html` (11) green; store tests green.
+- Prototype tested on desktop + device emulator (layout/flow). **Still pending: real installed
+  iPhone PWA** check of attachments preview/download + the preview/lock interaction + (future)
+  Face ID — per the iOS-PWA rule, that only tells the truth on a real device.
+
+### Status
+**Built (Encrypto v1.1.0)** — shipped to GitHub Pages. Prototype retained under `prototypes/`
+for the next feature.

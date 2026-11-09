@@ -179,6 +179,39 @@
     });
   }
 
+  // --- Binary encrypt / decrypt (attachments, v1.1) -------------------------
+  // Takes RAW BYTES rather than a string so file data isn't base64-inflated
+  // (~33%) before encryption. Same AES-GCM primitive, fresh IV per call.
+  function encryptBytes(bytes, key) {
+    var data;
+    if (bytes instanceof ArrayBuffer) data = new Uint8Array(bytes);
+    else if (bytes instanceof Uint8Array) data = bytes;
+    else return Promise.reject(
+      new EncryptoCryptoError('encryptBytes expects a Uint8Array or ArrayBuffer.')
+    );
+    var iv = randomBytes(IV_BYTES);
+    return subtle().encrypt({ name: 'AES-GCM', iv: iv }, key, data)
+      .then(function (buf) {
+        return { iv: bytesToBase64(iv), ciphertext: bytesToBase64(new Uint8Array(buf)) };
+      }).catch(function (e) { throw new EncryptoCryptoError('Encryption failed.', e); });
+  }
+
+  function decryptBytes(payload, key) {
+    if (!payload || typeof payload.iv !== 'string' || typeof payload.ciphertext !== 'string') {
+      return Promise.reject(new EncryptoCryptoError('Malformed encrypted payload.'));
+    }
+    var iv, ct;
+    try { iv = base64ToBytes(payload.iv); ct = base64ToBytes(payload.ciphertext); }
+    catch (e) { return Promise.reject(e); }
+    return subtle().decrypt({ name: 'AES-GCM', iv: iv }, key, ct)
+      .then(function (buf) { return new Uint8Array(buf); })
+      .catch(function (e) {
+        throw new EncryptoCryptoError(
+          'Could not decrypt: wrong passphrase or the data has been altered.', e
+        );
+      });
+  }
+
   // --- Salt helpers ---------------------------------------------------------
   // Generate a new random salt (returned as base64 for storage).
   function newSaltBase64() {
@@ -205,6 +238,10 @@
 
     encrypt: encrypt,
     decrypt: decrypt,
+
+    // binary variants (v1.1 attachments)
+    encryptBytes: encryptBytes,
+    decryptBytes: decryptBytes,
 
     newSalt: function () { return randomBytes(SALT_BYTES); },
     newSaltBase64: newSaltBase64,
