@@ -357,3 +357,11 @@ input:focus, textarea:focus, select:focus { border-color: var(--primary); box-sh
 
 .attach-add-row { display: flex; align-items: center; gap: 0.5rem; }
 .attach-busy { font-size: 0.75rem; color: var(--text-light); }
+
+/* version tag next to the brand title */
+.ver-tag {
+  font-size: 0.64rem; font-weight: 600; letter-spacing: 0.2px;
+  color: var(--text-light); background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: var(--radius-pill);
+  padding: 1px 7px; line-height: 1.4; align-self: center;
+}

@@ -858,6 +858,7 @@
   }
 
   function boot() {
+    var vt = $('verTag'); if (vt) vt.textContent = 'v' + S.APP_VERSION; // from the single source of truth
     initTheme(); wireReveal(); initSetup(); initUnlock();
     initVaultControls(); initEntryModal(); initAttachments(); initBackup();
     route();
