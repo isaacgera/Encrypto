@@ -726,6 +726,11 @@
     setScreen('Unlock');
     setTimeout(function () { $('unlockPass').focus(); }, 50);
     if (msg) toast(msg);
+    // If an update was waiting for a safe moment, this lock is it — unless the
+    // "Lock & update" button already triggered applyUpdate() (avoid double apply).
+    if (updatePending && !applyingViaButton) {
+      setTimeout(applyUpdate, 400);
+    }
   }
 
   // ===================== EXPORT / IMPORT (with attachments) =====================
@@ -845,6 +850,71 @@
     else if (!open.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
   }
 
+  // ===================== UPDATE-READY PROMPT (v1.1.1) =====================
+  // Shows an action toast when a new app version is ready (a waiting service
+  // worker). Lock-aware: if the vault is unlocked we never reload mid-session —
+  // we defer until the next lock, so an update can't interrupt a live decrypted
+  // vault.
+  var updatePending = false;
+  var waitingWorker = null;
+  var applyingViaButton = false;
+
+  function showUpdatePrompt() {
+    if (updatePending) return;
+    updatePending = true;
+    if (S.isUnlocked()) {
+      $('updateMsg').textContent = 'Update ready — applies when you lock.';
+      $('updateNowBtn').textContent = 'Lock & update';
+    } else {
+      $('updateMsg').textContent = 'A new version is ready.';
+      $('updateNowBtn').textContent = 'Update';
+    }
+    $('updateToast').hidden = false;
+  }
+
+  function applyUpdate() {
+    if (waitingWorker) {
+      try { waitingWorker.postMessage({ type: 'SKIP_WAITING' }); } catch (e) {}
+    } else {
+      // no waiting worker tracked — just reload to pick up the new assets
+      location.reload();
+    }
+  }
+
+  function initUpdates() {
+    $('updateLaterBtn').addEventListener('click', function () {
+      $('updateToast').hidden = true; // stays pending; re-offered on next lock
+    });
+    $('updateNowBtn').addEventListener('click', function () {
+      if (S.isUnlocked()) {
+        applyingViaButton = true;
+        doLock(null);
+        applyUpdate();
+      } else {
+        applyUpdate();
+      }
+    });
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(function (reg) {
+        if (reg.waiting) { waitingWorker = reg.waiting; showUpdatePrompt(); }
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              waitingWorker = nw; showUpdatePrompt();
+            }
+          });
+        });
+      }).catch(function () {});
+      var reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (reloaded) return; reloaded = true; location.reload();
+      });
+    }
+  }
+
   // ===================== ROUTING / BOOT =====================
   function route() {
     if (!window.crypto || !window.crypto.subtle || !window.isSecureContext) {
@@ -861,6 +931,7 @@
     var vt = $('verTag'); if (vt) vt.textContent = 'v' + S.APP_VERSION; // from the single source of truth
     initTheme(); wireReveal(); initSetup(); initUnlock();
     initVaultControls(); initEntryModal(); initAttachments(); initBackup();
+    initUpdates();
     route();
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {

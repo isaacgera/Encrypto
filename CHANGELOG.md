@@ -1,5 +1,25 @@
 # Encrypto — Changelog
 
+## [1.1.1] — 2026-10-31
+
+Update prompt + mobile viewport fix.
+
+### Added
+- **"New version ready" prompt** — when an updated app version is available, a
+  toast offers **Update / Later**. Lock-aware: if the vault is unlocked it does
+  not reload mid-session; the update applies on the next lock (manual, idle, or
+  "Lock & update"). Driven by the service worker; requires a `CACHE_NAME` bump
+  per release to trigger (now standard practice).
+- App version shown as a small tag next to the title (from `APP_VERSION`).
+
+### Fixed
+- **Mobile viewport fit** — the vault no longer loads zoomed-out and snap-fits
+  on tap. Uses dynamic viewport height (`100dvh`, `vh` fallback),
+  `overflow-x: hidden`, and `interactive-widget=resizes-content`.
+
+### Changed
+- Service worker `CACHE_NAME` → `encrypto-v1.1.1`.
+
 ## [1.1.0] — 2026-10-31
 
 Encrypted file attachments.

@@ -2,7 +2,7 @@
 <html lang="en" data-theme="">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="description" content="Encrypto — a private, locally-encrypted vault for documents, passwords and card details. Nothing leaves your device.">
 <meta name="theme-color" content="#3b5bdb">
 <title>Encrypto — Private Vault</title>
@@ -196,6 +196,15 @@
 <input type="file" id="attachFile" hidden>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- update-ready action toast -->
+<div class="update-toast" id="updateToast" role="alertdialog" aria-labelledby="updateMsg" hidden>
+  <span class="update-msg" id="updateMsg">A new version is ready.</span>
+  <span class="update-actions">
+    <button type="button" class="btn btn-primary btn-sm" id="updateNowBtn">Update</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="updateLaterBtn">Later</button>
+  </span>
+</div>
 
 <script src="js/crypto.js"></script>
 <script src="js/attachments.js"></script>

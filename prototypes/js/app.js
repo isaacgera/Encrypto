@@ -747,6 +747,13 @@
     setScreen('Unlock');
     setTimeout(function () { $('unlockPass').focus(); }, 50);
     if (msg) toast(msg);
+    // If an update was waiting for a safe moment, this lock is it — but only
+    // auto-apply for the idle/manual lock path, not when "Lock & update" already
+    // triggered applyUpdate() itself (that path passes through here first).
+    if (updatePending && !applyingViaButton) {
+      // give the lock screen a beat, then apply
+      setTimeout(applyUpdate, 400);
+    }
   }
 
   // ===================== EXPORT / IMPORT (with attachments) =====================
@@ -867,6 +874,84 @@
     else if (!open.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
   }
 
+  // ===================== UPDATE-READY PROMPT (v1.1.x) =====================
+  // Shows an action toast when a new app version is ready. Lock-aware: if the
+  // vault is unlocked we never reload mid-session — we defer the update until
+  // the next lock (option a), so an update can't yank a live decrypted vault.
+  //
+  // In the live app this is driven by the service worker (a waiting worker).
+  // The prototype has no SW, so a hidden "simulate" button stands in for it.
+  var updatePending = false;    // an update is ready and waiting to apply
+  var waitingWorker = null;     // the SW waiting to take over (live only)
+  var applyingViaButton = false; // guard against double-apply via "Lock & update"
+
+  function showUpdatePrompt() {
+    if (updatePending) return;
+    updatePending = true;
+    if (S.isUnlocked()) {
+      // Don't interrupt a live session — tell them it'll apply on next lock.
+      var t = $('updateToast');
+      $('updateMsg').textContent = 'Update ready — applies when you lock.';
+      $('updateNowBtn').textContent = 'Lock & update';
+      t.hidden = false;
+    } else {
+      // Safe to apply right now.
+      $('updateMsg').textContent = 'A new version is ready.';
+      $('updateNowBtn').textContent = 'Update';
+      $('updateToast').hidden = false;
+    }
+  }
+
+  function applyUpdate() {
+    // Tell a waiting SW to take over, then reload onto the new version.
+    if (waitingWorker) {
+      try { waitingWorker.postMessage({ type: 'SKIP_WAITING' }); } catch (e) {}
+    }
+    // In the prototype (no SW) this is just a reload to demonstrate the flow.
+    location.reload();
+  }
+
+  function initUpdates() {
+    $('updateLaterBtn').addEventListener('click', function () {
+      $('updateToast').hidden = true; // stays pending; re-offered on next lock
+    });
+    $('updateNowBtn').addEventListener('click', function () {
+      if (S.isUnlocked()) {
+        // "Lock & update": lock first (drops the key), then apply — set the flag
+        // so doLock's own deferred-apply doesn't also fire (avoid double reload).
+        applyingViaButton = true;
+        doLock(null);
+        applyUpdate();
+      } else {
+        applyUpdate();
+      }
+    });
+
+    // PROTOTYPE simulate trigger (no real SW here)
+    var sim = $('simUpdateBtn');
+    if (sim) sim.addEventListener('click', function () { showUpdatePrompt(); });
+
+    // LIVE wiring (harmless in the prototype where there's no SW):
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(function (reg) {
+        if (reg.waiting) { waitingWorker = reg.waiting; showUpdatePrompt(); }
+        reg.addEventListener('updatefound', function () {
+          var nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', function () {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              waitingWorker = nw; showUpdatePrompt();
+            }
+          });
+        });
+      }).catch(function () {});
+      var reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (reloaded) return; reloaded = true; location.reload();
+      });
+    }
+  }
+
   // ===================== ROUTING / BOOT =====================
   function route() {
     if (!window.crypto || !window.crypto.subtle || !window.isSecureContext) {
@@ -882,8 +967,10 @@
   function boot() {
     initTheme(); wireReveal(); initSetup(); initUnlock();
     initVaultControls(); initEntryModal(); initAttachments(); initBackup();
+    initUpdates();
     route();
-    // NOTE: prototype intentionally has no service worker (not installable).
+    // NOTE: prototype intentionally has no service worker (not installable) —
+    // the "[proto] simulate update" button stands in for a real SW update event.
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

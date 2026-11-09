@@ -2,7 +2,7 @@
 <html lang="en" data-theme="">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="description" content="Encrypto PROTOTYPE (v1.1.0-proto) — attachments feature testbed. Isolated storage; not the shipped app.">
 <meta name="theme-color" content="#3b5bdb">
 <title>Encrypto [PROTO] — Attachments</title>
@@ -195,6 +195,21 @@
 <input type="file" id="attachFile" hidden>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- update-ready action toast -->
+<div class="update-toast" id="updateToast" role="alertdialog" aria-labelledby="updateMsg" hidden>
+  <span class="update-msg" id="updateMsg">A new version is ready.</span>
+  <span class="update-actions">
+    <button type="button" class="btn btn-primary btn-sm" id="updateNowBtn">Update</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="updateLaterBtn">Later</button>
+  </span>
+</div>
+
+<!-- PROTOTYPE-only: simulate an update-ready event (no real SW in the prototype) -->
+<button type="button" id="simUpdateBtn"
+  style="position:fixed;left:8px;bottom:8px;z-index:80;font-size:.68rem;opacity:.6;background:#e8590c;color:#fff;border:0;border-radius:6px;padding:3px 8px;cursor:pointer">
+  [proto] simulate update
+</button>
 
 <script src="js/crypto.js"></script>
 <script src="js/attachments.js"></script>

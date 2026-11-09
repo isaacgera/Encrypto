@@ -237,3 +237,28 @@ desktop + mobile emulator, then ported to the live app and deployed. Shipped as 
 ### Status
 **Built (Encrypto v1.1.0)** — shipped to GitHub Pages. Prototype retained under `prototypes/`
 for the next feature.
+
+---
+
+## Session 3 (cont.) — 31 Oct 2026 — v1.1.1 update prompt + mobile fit
+
+**Small follow-up release after v1.1.0.** Built in the prototype, then ported to live and shipped.
+
+- **Version tag** next to the title (display-only, read from `APP_VERSION`) — shipped first as a
+  no-bump change on v1.1.0, now carried forward.
+- **"New version ready" prompt** — service-worker-driven action toast (Update / Later).
+  **Lock-aware (apply-on-next-lock):** never reloads a live unlocked vault; applies on the next
+  lock (manual/idle) or via "Lock & update". Prototype used a hidden "simulate update" button
+  (no SW in the prototype); that button is NOT in the live build.
+- **Mobile viewport fix** — vault loaded zoomed-out and snap-fit on tap; fixed with `100dvh`
+  (vh fallback), `overflow-x:hidden`, and `interactive-widget=resizes-content`.
+- **Release:** `APP_VERSION` 1.1.0 → **1.1.1**; SW `CACHE_NAME` → **encrypto-v1.1.1** (the bump
+  is also what makes the update prompt fire for installed PWAs going forward). Committed + pushed.
+
+### Standing practice confirmed
+Every future release **must bump `CACHE_NAME`** or the update prompt won't trigger (and installed
+PWAs keep serving stale assets).
+
+### Still pending (real device)
+The update prompt's genuine SW detection/activation, the mobile viewport fit, and the attachments
+preview/download all need confirming on the **real installed iPhone PWA** now that they're live.
