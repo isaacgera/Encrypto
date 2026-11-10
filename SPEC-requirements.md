@@ -229,4 +229,41 @@ typing the passphrase, on that device only.
   biometric unlock (§10) and any revised crypto/key storage.
 
 ---
+
+# v1.2 — Custom entry types / categories — captured, NOT yet built
+
+> Raised at the end of the v1.1.x session (31 Oct 2026). Agreed to **defer to v1.2** and capture
+> here. Bigger than it looks (data-model change, ~attachments-scale) — needs its own **Plan-mode**
+> pass before any code. Could share a v1.2 release with biometric unlock (§10).
+
+## 12. Feature: user-defined entry types beyond the built-in four
+Today the four types (Document, Password, Card, Note) are hardcoded in `TYPE_FIELDS`, each driving
+its own field set, icon, subtitle rule, and which fields are secret/masked. "Add a custom type"
+therefore really means letting the user define a type **and its fields**, persist those definitions
+in the vault, and have the list/filters/search/icons work with arbitrary types.
+
+- **REQ-24:** As a user, I want to **add a new custom type** (e.g. "Wi-Fi", "Membership",
+  "Bank account") so I can organise entries beyond the built-in four.
+- **REQ-25:** As a user, I want a custom type to have **its own fields** (name each field; mark
+  which are secret/masked), so it's genuinely useful — not just title + notes.
+- **REQ-26:** As a user, I want to **edit / delete** a custom type; deleting must handle existing
+  entries of that type safely (reassign or block with a clear warning — decide in Plan).
+
+### Open questions to resolve at kickoff (Plan mode)
+- **Scope of fields:** full **user-defined fields** (a mini form-builder — the proper, more
+  flexible version, more work) **vs** a lighter "custom type = title + notes + a few generic
+  fields" (quicker, less flexible). *Not yet decided.*
+- **Editing the built-in four:** my recommendation is to keep the built-in types' fields **fixed**
+  (existing entries depend on them; renaming/removing a field needs migration) and only allow
+  **adding** new custom types. Confirm at kickoff whether the user also wants to edit the defaults.
+- Icon/colour per custom type (picker vs auto).
+
+### Non-functional / design constraints
+- **NFR-19:** store type definitions **inside the encrypted vault** (so they're private too), with
+  a schema version bump + migration so existing vaults keep opening (schema is at 2 today).
+- **NFR-20:** the list, type-filter chips, subtitle logic, search, and export/import must all work
+  for arbitrary types, not just the hardcoded four.
+- **NFR-21:** backward-compatible — existing entries (built-in types) are untouched.
+
+---
 *Naming convention: REQ-XX functional, NFR-XX non-functional.*

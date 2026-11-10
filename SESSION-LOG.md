@@ -262,3 +262,57 @@ PWAs keep serving stale assets).
 ### Still pending (real device)
 The update prompt's genuine SW detection/activation, the mobile viewport fit, and the attachments
 preview/download all need confirming on the **real installed iPhone PWA** now that they're live.
+
+---
+
+## Session 3 (wrap-up) — 31 Oct 2026 — v1.1.x attachments + mobile polish, shipped
+
+**Shipped encrypted attachments and then a run of mobile-polish patches, all prototype-first
+then ported/deployed to GitHub Pages. Ended at v1.1.6.**
+
+### Releases today (all live on GitHub Pages)
+- **v1.1.0** — Encrypted file attachments: IndexedDB store (`encrypto_attachments`), binary
+  `encryptBytes`/`decryptBytes`, filename+MIME encrypted; add on any of the 4 types; image
+  thumbnails; unified preview; 5 MB cap with in-browser image compression; attachments in the
+  encrypted backup; schema → 2 with transparent migration.
+- **v1.1.1** — "New version ready" update prompt (service-worker driven, lock-aware =
+  apply-on-next-lock); app version tag by the title; first (partial) mobile viewport attempt.
+- **v1.1.2** — Proper mobile layout fix attempt (fixed topbar/footer, internal scroll).
+- **v1.1.3** — iOS safe-area insets (`env(safe-area-inset-*)`).
+- **v1.1.4** — iOS web-app meta tags (`apple-mobile-web-app-*`, status-bar-style
+  black-translucent) — the real fix that made the header clear the status bar. (Needs a
+  home-screen reinstall to take effect.)
+- **v1.1.5** — Reworked layout to a **3-row CSS grid** (`auto 1fr auto`) so the footer anchors
+  to the bottom reliably — ended the footer/height whack-a-mole.
+- **v1.1.6** — Renamed **"master passphrase" → "Encrypto Key"** throughout (app + user guide);
+  centred full-width button labels (Unlock/Create vault); footer nudged lower.
+
+### Workflow notes
+- Course-corrected early to **prototype-first**: all features built in `prototypes/` (isolated
+  `encproto_` localStorage + `encrypto_attachments_proto` IndexedDB, PROTOTYPE banner, no SW),
+  tested, then ported to live. Mobile-polish patches were ported + deployed directly because the
+  effects (safe-area, SW update, installed-PWA layout) can only be verified on the real device.
+- **Standing practice reaffirmed:** every release bumps `APP_VERSION` + SW `CACHE_NAME` together,
+  or the update prompt won't fire and installed PWAs serve stale assets.
+- The Windows terminal git push returns empty output; confirmed each push via
+  `git rev-parse origin/main` before calling it done.
+
+### Verified
+- Crypto (11) + attachments (11) + store tests green. Attachments flow + preview + update toast
+  tested in prototype and on desktop. Mobile fit verified by Isaac on the real iPhone through
+  the v1.1.x iterations (header now clears the status bar; footer anchored).
+- The **update toast** swaps silently on iOS before the popup is seen (expected SW behaviour);
+  mechanism confirmed working via the version advancing each release.
+
+### Captured for a future v1.2 (NOT built) — see SPEC-requirements
+- §10 Biometric unlock (WebAuthn / Face ID) — needs Plan (changes the "key never persisted"
+  stance).
+- §11 Unlock throttle — only if ever a Play/App Store app; non-destructive only.
+- §12 **Custom entry types / categories** — user-defined types + fields beyond the built-in
+  four; data-model change, ~attachments-scale; open questions (custom fields depth; whether to
+  edit the defaults) to settle in Plan. Could share a v1.2 release with §10.
+
+### Status
+**Built (Encrypto v1.1.6)** — attachments + mobile polish shipped and signed off. Prototype
+retained under `prototypes/`. Next pickup: a Plan-mode pass for v1.2 (custom types and/or
+biometric unlock).
